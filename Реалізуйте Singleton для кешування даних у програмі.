@@ -1,0 +1,110 @@
+public class ConfigurationManager
+{
+    private static ConfigurationManager _instance;
+    private static readonly object _lock = new object();
+    private readonly Dictionary<string, string> _cache;
+
+    // Приватний конструктор
+    private ConfigurationManager()
+    {
+        _cache = new Dictionary<string, string>();
+        // Ініціалізація кешу з деякими початковими даними
+        InitializeCache();
+    }
+
+    // Реалізація Singleton
+    public static ConfigurationManager Instance
+    {
+        get
+        {
+            lock (_lock)
+            {
+                if (_instance == null)
+                {
+                    _instance = new ConfigurationManager();
+                }
+                return _instance;
+            }
+        }
+    }
+
+    // Ініціалізація кешу
+    private void InitializeCache()
+    {
+        // Додаємо початкові конфігураційні дані
+        _cache.Add("DatabaseConnection", "Server=localhost;Database=MyApp;Trusted_Connection=True;");
+        _cache.Add("ApiEndpoint", "https://api.github.com"); // Замінено з https://api.example.com на https://api.github.com
+        _cache.Add("MaxRetries", "3");
+    }
+
+    // Отримання значення з кешу за ключем
+    public string GetConfiguration(string key)
+    {
+        if (_cache.ContainsKey(key))
+        {
+            return _cache[key];
+        }
+        return null; // або можна кидати виняток
+    }
+
+    // Додавання або оновлення значення в кеші
+    public void SetConfiguration(string key, string value)
+    {
+        lock (_lock)
+        {
+            if (_cache.ContainsKey(key))
+            {
+                _cache[key] = value;
+            }
+            else
+            {
+                _cache.Add(key, value);
+            }
+        }
+    }
+
+    // Очищення кешу
+    public void ClearCache()
+    {
+        lock (_lock)
+        {
+            _cache.Clear();
+            InitializeCache(); // Поновлюємо початкові значення
+        }
+    }
+
+    // Отримання всіх конфігураційних даних
+    public IReadOnlyDictionary<string, string> GetAllConfigurations()
+    {
+        return _cache;
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        // Отримання єдиного екземпляру ConfigurationManager
+        var config = ConfigurationManager.Instance;
+
+        // Приклади використання
+        Console.WriteLine("Database Connection: " + config.GetConfiguration("DatabaseConnection"));
+        Console.WriteLine("API Endpoint: " + config.GetConfiguration("ApiEndpoint"));
+
+        // Додавання нової конфігурації
+        config.SetConfiguration("NewSetting", "NewValue");
+        Console.WriteLine("New Setting: " + config.GetConfiguration("NewSetting"));
+
+        // Виведення всіх конфігурацій
+        Console.WriteLine("\nAll configurations:");
+        foreach (var item in config.GetAllConfigurations())
+        {
+            Console.WriteLine($"{item.Key}: {item.Value}");
+        }
+
+        // Очищення кешу
+        config.ClearCache();
+        Console.WriteLine("\nAfter cache clear:");
+        Console.WriteLine("Database Connection: " + config.GetConfiguration("DatabaseConnection"));
+    }
+}
