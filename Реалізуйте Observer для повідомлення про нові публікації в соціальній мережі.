@@ -1,0 +1,81 @@
+public interface IObserver
+{
+    void Update(string message);
+}
+public interface ISubject
+{
+    void RegisterObserver(IObserver observer);
+    void RemoveObserver(IObserver observer);
+    void NotifyObservers();
+}
+public class SocialNetwork : ISubject
+{
+    private readonly List<IObserver> _observers = new List<IObserver>();
+    private string _latestPost;
+
+    public void RegisterObserver(IObserver observer)
+    {
+        if (!_observers.Contains(observer))
+        {
+            _observers.Add(observer);
+        }
+    }
+
+    public void RemoveObserver(IObserver observer)
+    {
+        _observers.Remove(observer);
+    }
+
+    public void NotifyObservers()
+    {
+        foreach (var observer in _observers)
+        {
+            observer.Update(_latestPost);
+        }
+    }
+
+    public void CreatePost(string postContent)
+    {
+        _latestPost = postContent;
+        Console.WriteLine($"New post created: {postContent}");
+        NotifyObservers();
+    }
+}
+
+public class User : IObserver
+{
+    private readonly string _username;
+
+    public User(string username)
+    {
+        _username = username;
+    }
+
+    public void Update(string message)
+    {
+        Console.WriteLine($"{_username} received notification: {message}");
+    }
+}
+class Program
+{
+    static void Main()
+    {
+        // Створюємо соціальну мережу
+        var socialNetwork = new SocialNetwork();
+        var user1 = new User("Alice");
+        var user2 = new User("Bob");
+        var user3 = new User("Charlie");
+
+        // Підписуємо користувачів на оновлення
+        socialNetwork.RegisterObserver(user1);
+        socialNetwork.RegisterObserver(user2);
+
+        socialNetwork.CreatePost("Hello, this is the first post!");
+        // Додаємо ще одного підписника
+        socialNetwork.RegisterObserver(user3);
+        socialNetwork.CreatePost("Check out my new photo!");
+        // Відписуємо одного користувача
+        socialNetwork.RemoveObserver(user2);
+        socialNetwork.CreatePost("Last post of the day!");
+    }
+}
